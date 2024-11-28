@@ -1,0 +1,35 @@
+import cv2 as cv
+import numpy as np
+
+capture = cv.VideoCapture(0)
+face_cascade = cv.CascadeClassifier('./haarcascade_frontalface_default.xml')
+eye_cascade = cv.CascadeClassifier('haarcascade_eye.xml')
+
+if face_cascade.empty() or eye_cascade.empty():
+    print("Error: Could not load cascades.")
+    exit()
+
+while True:
+    ret, frame = capture.read()
+    if not ret or frame is None:
+        print("Error: Failed to capture frame from camera.")
+        break
+
+    gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, 1.1, 5)
+    print(f"Faces detected: {len(faces)}")
+
+    for (x, y, w, h) in faces:
+        cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        roi_gray = gray[y:y + h, x:x + w]  # Extract the face region
+        eyes = eye_cascade.detectMultiScale(roi_gray, 1.1, 4)
+        print(f"Eyes detected: {len(eyes)}")
+        for (ex, ey, ew, eh) in eyes:
+            cv.rectangle(frame[y:y + h, x:x + w], (ex, ey), (ex + ew, ey + eh), (0, 0, 255), 2)
+
+    cv.imshow('Frame', frame)
+    if cv.waitKey(1) & 0xFF == 27:
+        break
+
+capture.release()
+cv.destroyAllWindows()
